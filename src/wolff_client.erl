@@ -392,6 +392,8 @@ tr_reason({{Host, Port}, Reason}) ->
 
 do_tr_reason({timeout, _Stack}) -> connection_timed_out;
 do_tr_reason({econnrefused, _Stack}) -> connection_refused;
+do_tr_reason({nxdomain, _Stack}) -> unresolvable_hostname;
+do_tr_reason({enetunreach, _Stack}) -> unreachable_host;
 do_tr_reason(Other) -> Other.
 
 tr_reasons(L) ->
@@ -400,4 +402,9 @@ tr_reasons(L) ->
 bin(A) when is_atom(A) -> atom_to_binary(A, utf8); %% hostname can be atom like 'localhost'
 bin(L) when is_list(L) -> iolist_to_binary(L);
 bin(B) when is_binary(B) -> B;
-bin(P) when is_integer(P) -> integer_to_binary(P). %% port number
+bin(P) when is_integer(P) -> integer_to_binary(P); %% port number
+bin(X) ->
+    case inet:ntoa(X) of
+        {error, _} -> bin(io_lib:format("~0p", [X]));
+        Addr -> bin(Addr)
+    end.
